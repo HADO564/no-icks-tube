@@ -1,0 +1,60 @@
+name: "🤢 Submit an ick"
+description: "Something about YouTube that bugs you? Suggest an ick for no-icks-tube to fix."
+title: "[ick]: "
+labels: ["ick"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for sharing your ick! 🙌
+
+        **Before posting:** please [search existing icks](https://github.com/HADO564/no-icks-tube/issues?q=is%3Aissue+label%3Aick)
+        and 👍 the ones you share instead of opening a duplicate — reactions are how icks get prioritised.
+  - type: textarea
+    id: ick
+    attributes:
+      label: "What's the ick?"
+      description: "The thing about YouTube that annoys you."
+      placeholder: "e.g. Autoplay starts the next video before I'm done reading the comments."
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: "Where on YouTube does it happen?"
+      options:
+        - Watch page (video / player)
+        - Comments
+        - Suggested videos / sidebar
+        - Home / feed
+        - Shorts
+        - Search
+        - Channel pages
+        - Everywhere / other
+    validations:
+      required: true
+  - type: textarea
+    id: fix
+    attributes:
+      label: "How would you want it fixed?"
+      description: "Optional — describe your ideal behaviour."
+      placeholder: "e.g. Let me disable autoplay per-session and remember it."
+    validations:
+      required: false
+  - type: dropdown
+    id: severity
+    attributes:
+      label: "How much does it bug you?"
+      options:
+        - "Mild — minor annoyance"
+        - "Medium — regularly irritating"
+        - "Major — I'd switch browser/extension over this"
+    validations:
+      required: false
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: "I searched and this ick isn't already listed."
+          required: true

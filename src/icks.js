@@ -1,0 +1,97 @@
+/*
+ * icks.js — the "ick registry": the single source of truth for every ick
+ * no-icks-tube fixes, the settings that control each fix, and their defaults.
+ *
+ * This runs both as a content script (sharing scope with content.js) and via a
+ * <script> tag in the options page. It exposes `globalThis.NoIcksTube`.
+ *
+ * To add a new ick fix:
+ *   1. Add an entry here (its settings auto-build the options UI + DEFAULTS).
+ *   2. Implement the behavior in src/content.js (and src/inject.js if it needs
+ *      the page context), keyed off the same setting(s).
+ */
+(function () {
+  "use strict";
+
+  // Selectable video-quality steps (px -> label), best -> worst.
+  const QUALITY = [
+    [4320, "4320p (8K)"],
+    [2160, "2160p (4K)"],
+    [1440, "1440p (2K)"],
+    [1080, "1080p (Full HD)"],
+    [720, "720p (HD)"],
+    [480, "480p"],
+    [360, "360p"],
+    [240, "240p"],
+    [144, "144p"],
+  ];
+
+  const CARD_WIDTHS = [
+    [260, "Narrow (260px — more columns)"],
+    [330, "Medium (330px)"],
+    [420, "Wide (420px — fewer columns)"],
+  ];
+
+  // Each ick: the annoyance (`ick`), what we do about it (`fix`), where it
+  // happens (`area`), and the settings that control it. The first setting is
+  // the primary on/off toggle; the rest are options shown underneath it.
+  const ICKS = [
+    {
+      id: "low-quality",
+      ick: "Videos play below the quality I want",
+      fix: "Sets a default quality inside the range below, once per video — you can still override it in the player afterwards.",
+      area: "Player",
+      // min must not exceed max; the options page enforces this.
+      validateRange: { minKey: "minQuality", maxKey: "maxQuality" },
+      settings: [
+        { key: "qualityEnabled", type: "toggle", default: true, primary: true },
+        { key: "maxQuality", type: "select", label: "Maximum (cap)", default: 4320, options: QUALITY },
+        { key: "minQuality", type: "select", label: "Minimum (target)", default: 1080, options: QUALITY },
+      ],
+    },
+    {
+      id: "suggestions-scroll",
+      ick: "Scrolling suggested videos scrolls the whole page and the video disappears",
+      fix: "Turns the suggested-videos column into its own scroll container, independent of the video and comments.",
+      area: "Suggested / sidebar",
+      settings: [
+        { key: "sidebarEnabled", type: "toggle", default: true, primary: true },
+      ],
+    },
+    {
+      id: "comments-scroll",
+      ick: "Comments hijack the page scroll and the video scrolls away",
+      fix: "Gives the comments their own sticky scrollbar, plus a fixed “Back to video” button once the player scrolls out of view.",
+      area: "Comments",
+      settings: [
+        { key: "commentsScroll", type: "toggle", default: true, primary: true },
+      ],
+    },
+    {
+      id: "comments-wide",
+      ick: "Comments are one giant wide column",
+      fix: "Lays comments out as a responsive grid of cards that expand to full-width rows on Read more / replies, with a Collapse button.",
+      area: "Comments",
+      settings: [
+        { key: "commentsCards", type: "toggle", default: true, primary: true },
+        { key: "cardMinWidth", type: "select", label: "Minimum card width", default: 330, options: CARD_WIDTHS },
+        { key: "cardMinHeight", type: "number", label: "Card height (px)", default: 150, min: 100, max: 600, step: 10 },
+      ],
+    },
+  ];
+
+  // Flatten every setting's default into one DEFAULTS object.
+  const DEFAULTS = {};
+  for (const ick of ICKS) {
+    for (const s of ick.settings) DEFAULTS[s.key] = s.default;
+  }
+
+  // Repo links for the "Submit an ick" / "Browse icks" buttons.
+  const REPO = "https://github.com/HADO564/no-icks-tube";
+  const LINKS = {
+    submit: REPO + "/issues/new?template=ick.yml",
+    browse: REPO + "/issues?q=is%3Aissue+label%3Aick",
+  };
+
+  globalThis.NoIcksTube = { ICKS, DEFAULTS, QUALITY, CARD_WIDTHS, LINKS };
+})();

@@ -17,7 +17,20 @@ icks out of YouTube:
    card to a full-width row; *Show less* shrinks it back. Done purely with CSS
    `:has()`, so it tracks YouTube's own expand state.
 
-Configure all of these in the extension's options/popup.
+Configure all of these in the extension's options/popup — a "Fix your icks"
+list where each toggle removes one ick.
+
+## Got an ick?
+
+no-icks-tube is built around **icks** — the things about YouTube that bug you.
+Each ick that gets enough support becomes a toggle in the extension.
+
+- **Suggest an ick:** [open the ick form](https://github.com/HADO564/no-icks-tube/issues/new?template=ick.yml)
+- **Browse & upvote icks:** [see what others raised](https://github.com/HADO564/no-icks-tube/issues?q=is%3Aissue+label%3Aick) and 👍 the ones you share — reactions decide what gets built next.
+
+Icks live as GitHub issues labelled `ick` (→ `ick:planned` → `ick:fixed`). The
+fixes themselves are defined in [`src/icks.js`](src/icks.js): add an entry there
+and the options UI + defaults update automatically.
 
 ## How it works
 
@@ -32,6 +45,7 @@ Configure all of these in the extension's options/popup.
 ## Load it temporarily
 
 ### Firefox / Zen
+
 1. Go to `about:debugging#/runtime/this-firefox`.
 2. **Load Temporary Add-on…** → pick `manifest.json` in this folder.
 3. Open YouTube, click the toolbar icon to set preferences.
@@ -41,6 +55,7 @@ signed via addons.mozilla.org, or use Firefox Developer/Nightly with
 `xpinstall.signatures.required = false`.)
 
 ### Chromium (Chrome / Edge / Brave)
+
 1. Go to `chrome://extensions`.
 2. Enable **Developer mode**.
 3. **Load unpacked** → select this folder.

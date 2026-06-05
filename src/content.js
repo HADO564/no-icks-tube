@@ -15,15 +15,17 @@
     hd720: 720, large: 480, medium: 360, small: 240, tiny: 144,
   };
 
-  const DEFAULTS = {
+  // Defaults come from the shared ick registry (src/icks.js, loaded first in
+  // the same content-script world). Fallback keeps content.js working alone.
+  const DEFAULTS = (globalThis.NoIcksTube && globalThis.NoIcksTube.DEFAULTS) || {
     qualityEnabled: true,
-    maxQuality: 4320, // best available, capped here (px)
-    minQuality: 1080, // try to stay >= this when the video allows (px)
+    maxQuality: 4320,
+    minQuality: 1080,
     sidebarEnabled: true,
-    commentsScroll: true, // comments get their own scroll pane + Back-to-video
+    commentsScroll: true,
     commentsCards: true,
-    cardMinWidth: 330, // px, minimum width of a comment card before wrapping
-    cardMinHeight: 150, // px, minimum height of a comment card
+    cardMinWidth: 330,
+    cardMinHeight: 150,
   };
 
   // ---- Inject the page-context script ------------------------------------

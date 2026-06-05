@@ -75,6 +75,51 @@ select:disabled {
   opacity: 0.5;
 }
 
-.hint { color: var(--muted); font-size: 13px; margin: 12px 0; }
+.hint { color: var(--muted); font-size: 13px; margin: 12px 0 0; }
 .error { color: #ff6b6b; font-size: 13px; margin: 6px 0 0; }
 .saved { color: #4caf50; font-weight: 600; text-align: center; }
+
+/* Header */
+.head { margin-bottom: 18px; }
+.tagline { color: var(--muted); margin: 2px 0 0; font-size: 14px; }
+
+/* Per-ick "where" tag */
+.row .area {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px 9px;
+  white-space: nowrap;
+}
+
+/* Footer: suggest / browse icks */
+.foot {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+.foot-hint { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+.foot-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.btn:hover { border-color: var(--accent); }
+.btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
+}

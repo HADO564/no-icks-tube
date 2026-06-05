@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: "🗳️ Browse & upvote existing icks"
+    url: https://github.com/HADO564/no-icks-tube/issues?q=is%3Aissue+label%3Aick
+    about: "See icks others have submitted and 👍 the ones you share — that's how they get prioritised."
