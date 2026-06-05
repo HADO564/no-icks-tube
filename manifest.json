@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "YouTube Quality & Layout",
+  "version": "1.0.0",
+  "description": "Force a preferred video quality (or quality range) and make the suggested-videos sidebar scroll independently.",
+  "permissions": ["storage"],
+  "host_permissions": ["https://www.youtube.com/*", "https://m.youtube.com/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*", "https://m.youtube.com/*"],
+      "js": ["src/content.js"],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["src/inject.js"],
+      "matches": ["https://www.youtube.com/*", "https://m.youtube.com/*"]
+    }
+  ],
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": true
+  },
+  "action": {
+    "default_title": "YouTube Quality & Layout",
+    "default_popup": "options/options.html",
+    "default_icon": {
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "icons": {
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "youtube-quality-layout@local.extension",
+      "strict_min_version": "115.0"
+    }
+  }
+}

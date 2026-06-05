@@ -1,0 +1,12 @@
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.log
+
+# Packaged builds
+*.zip
+*.xpi
+web-ext-artifacts/
+
+# Node (if tooling is added later)
+node_modules/

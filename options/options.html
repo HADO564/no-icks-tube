@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>YouTube Quality &amp; Layout — Settings</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <main>
+      <h1>YouTube Quality &amp; Layout</h1>
+
+      <section class="card">
+        <div class="row">
+          <label class="switch">
+            <input type="checkbox" id="qualityEnabled" />
+            <span>Force video quality</span>
+          </label>
+        </div>
+
+        <p class="hint">
+          The player will pick the <strong>highest</strong> available quality
+          that fits inside the range below. If a video can't reach your minimum,
+          it falls back to the best it offers.
+        </p>
+
+        <div class="row split">
+          <div class="field">
+            <label for="maxQuality">Maximum (cap)</label>
+            <select id="maxQuality"></select>
+          </div>
+          <div class="field">
+            <label for="minQuality">Minimum (target)</label>
+            <select id="minQuality"></select>
+          </div>
+        </div>
+        <p class="error" id="rangeError" hidden>
+          Minimum can't be higher than the maximum.
+        </p>
+      </section>
+
+      <section class="card">
+        <div class="row">
+          <label class="switch">
+            <input type="checkbox" id="sidebarEnabled" />
+            <span>Independent suggested-videos scrolling</span>
+          </label>
+        </div>
+        <p class="hint">
+          Makes the suggested-videos column scroll on its own. Scrolling over the
+          video scrolls the page into the comments; scrolling over the
+          suggestions scrolls only that column.
+        </p>
+      </section>
+
+      <section class="card">
+        <div class="row">
+          <label class="switch">
+            <input type="checkbox" id="commentsCards" />
+            <span>Comments as cards</span>
+          </label>
+        </div>
+        <p class="hint">
+          Lays comments out as vertical cards in a responsive grid. Clicking a
+          comment's <em>Read more</em> expands that card to a full-width row;
+          <em>Show less</em> shrinks it back.
+        </p>
+        <div class="row split">
+          <div class="field">
+            <label for="cardMinWidth">Minimum card width</label>
+            <select id="cardMinWidth">
+              <option value="260">Narrow (260px — more columns)</option>
+              <option value="330">Medium (330px)</option>
+              <option value="420">Wide (420px — fewer columns)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="cardMinHeight">Card height (px)</label>
+            <input
+              type="number"
+              id="cardMinHeight"
+              min="100"
+              max="600"
+              step="10"
+            />
+          </div>
+        </div>
+      </section>
+
+      <p class="saved" id="savedNote" hidden>Saved ✓</p>
+    </main>
+    <script src="options.js"></script>
+  </body>
+</html>
