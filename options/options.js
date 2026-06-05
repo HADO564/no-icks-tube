@@ -9,6 +9,7 @@
     maxQuality: 4320,
     minQuality: 1080,
     sidebarEnabled: true,
+    commentsScroll: true,
     commentsCards: true,
     cardMinWidth: 330,
     cardMinHeight: 150,
@@ -33,6 +34,7 @@
     maxQuality: $("maxQuality"),
     minQuality: $("minQuality"),
     sidebarEnabled: $("sidebarEnabled"),
+    commentsScroll: $("commentsScroll"),
     commentsCards: $("commentsCards"),
     cardMinWidth: $("cardMinWidth"),
     cardMinHeight: $("cardMinHeight"),
@@ -88,6 +90,7 @@
       maxQuality: max,
       minQuality: min,
       sidebarEnabled: els.sidebarEnabled.checked,
+      commentsScroll: els.commentsScroll.checked,
       commentsCards: els.commentsCards.checked,
       cardMinWidth: parseInt(els.cardMinWidth.value, 10),
       cardMinHeight: clampHeight(els.cardMinHeight.value),
@@ -112,6 +115,7 @@
     els.maxQuality.value = String(s.maxQuality);
     els.minQuality.value = String(s.minQuality);
     els.sidebarEnabled.checked = s.sidebarEnabled;
+    els.commentsScroll.checked = s.commentsScroll;
     els.commentsCards.checked = s.commentsCards;
     els.cardMinWidth.value = String(s.cardMinWidth);
     els.cardMinHeight.value = String(s.cardMinHeight);
@@ -122,6 +126,7 @@
       els.maxQuality,
       els.minQuality,
       els.sidebarEnabled,
+      els.commentsScroll,
       els.commentsCards,
       els.cardMinWidth,
       els.cardMinHeight,

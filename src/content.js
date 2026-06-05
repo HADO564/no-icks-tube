@@ -20,6 +20,7 @@
     maxQuality: 4320, // best available, capped here (px)
     minQuality: 1080, // try to stay >= this when the video allows (px)
     sidebarEnabled: true,
+    commentsScroll: true, // comments get their own scroll pane + Back-to-video
     commentsCards: true,
     cardMinWidth: 330, // px, minimum width of a comment card before wrapping
     cardMinHeight: 150, // px, minimum height of a comment card
@@ -90,6 +91,114 @@
       existing.remove();
     }
   }
+
+  // ---- Comments as an independent scroll pane + "Back to video" button ----
+  const COMMENTS_PANE_STYLE_ID = "ytql-commentspane-style";
+
+  const COMMENTS_PANE_CSS = `
+    /* Give the comments section its own height + scrollbar. Sticky so it pins
+       under the masthead while you read; degrades to an in-flow scroll box if
+       an ancestor prevents sticking — either way it scrolls on its own. */
+    ytd-watch-flexy[is-two-columns_]:not([fullscreen]) #primary #comments {
+      position: -webkit-sticky;
+      position: sticky;
+      top: calc(var(--ytd-toolbar-height, 56px) + 8px);
+      max-height: calc(100vh - var(--ytd-toolbar-height, 56px) - 24px);
+      overflow-y: auto;
+      overscroll-behavior: contain;     /* keep scrolling inside the pane */
+      scrollbar-width: thin;
+    }
+    ytd-watch-flexy[is-two-columns_]:not([fullscreen]) #primary #comments::-webkit-scrollbar {
+      width: 10px;
+    }
+    ytd-watch-flexy[is-two-columns_]:not([fullscreen]) #primary #comments::-webkit-scrollbar-thumb {
+      background: rgba(128,128,128,0.5);
+      border-radius: 5px;
+    }
+  `;
+
+  let commentsScrollOn = false;
+  let backBtn = null;
+  let recomputePending = false;
+
+  function getPlayerEl() {
+    return document.querySelector("#movie_player, .html5-video-player");
+  }
+
+  function getCommentsPane() {
+    return document.querySelector("ytd-watch-flexy #primary #comments");
+  }
+
+  function ensureBackToVideoButton() {
+    if (backBtn) return;
+    backBtn = document.createElement("button");
+    backBtn.id = "ytql-back-to-video";
+    backBtn.type = "button";
+    backBtn.textContent = "↑ Back to video";
+    // Styled inline so visibility never depends on a togglable stylesheet.
+    Object.assign(backBtn.style, {
+      position: "fixed",
+      right: "24px",
+      bottom: "24px",
+      zIndex: "2147483000",
+      display: "none",
+      padding: "10px 16px",
+      border: "none",
+      borderRadius: "20px",
+      font: "500 13px/1 Roboto, system-ui, sans-serif",
+      color: "#fff",
+      background: "#f03",
+      boxShadow: "0 2px 10px rgba(0,0,0,0.35)",
+      cursor: "pointer",
+    });
+    backBtn.addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      const pane = getCommentsPane();
+      if (pane) pane.scrollTo({ top: 0, behavior: "smooth" });
+    });
+    (document.body || document.documentElement).appendChild(backBtn);
+  }
+
+  // Show the button once the player has scrolled (mostly) out of view.
+  function recomputeBackToVideo() {
+    recomputePending = false;
+    if (!backBtn) return;
+    let show = false;
+    if (commentsScrollOn && location.pathname.startsWith("/watch")) {
+      const player = getPlayerEl();
+      if (player) {
+        const r = player.getBoundingClientRect();
+        show = r.bottom < 80; // player's bottom is up behind the masthead
+      }
+    }
+    backBtn.style.display = show ? "inline-flex" : "none";
+  }
+
+  function scheduleRecompute() {
+    if (recomputePending) return;
+    recomputePending = true;
+    requestAnimationFrame(recomputeBackToVideo);
+  }
+
+  function setCommentsPane(enabled) {
+    commentsScrollOn = enabled;
+    const existing = document.getElementById(COMMENTS_PANE_STYLE_ID);
+    if (enabled) {
+      ensureBackToVideoButton();
+      if (!existing) {
+        const style = document.createElement("style");
+        style.id = COMMENTS_PANE_STYLE_ID;
+        style.textContent = COMMENTS_PANE_CSS;
+        (document.head || document.documentElement).appendChild(style);
+      }
+    } else if (existing) {
+      existing.remove();
+    }
+    scheduleRecompute();
+  }
+
+  window.addEventListener("scroll", scheduleRecompute, { passive: true });
+  window.addEventListener("resize", scheduleRecompute, { passive: true });
 
   // ---- Comments as responsive cards --------------------------------------
   const COMMENTS_STYLE_ID = "ytql-comments-style";
@@ -321,6 +430,7 @@
 
   function applyAll(settings) {
     setSidebar(settings.sidebarEnabled);
+    setCommentsPane(settings.commentsScroll);
     setComments(settings.commentsCards, settings.cardMinWidth, settings.cardMinHeight);
     commentsOn = settings.commentsCards;
     if (commentsOn) ensureCollapseButtons();
@@ -336,7 +446,10 @@
   // Re-post settings on SPA navigation (page context may have been recreated).
   window.addEventListener(
     "yt-navigate-finish",
-    () => loadSettings().then((s) => postSettings(s)),
+    () => {
+      loadSettings().then((s) => postSettings(s));
+      scheduleRecompute(); // re-evaluate the Back-to-video button for the new page
+    },
     true
   );
 
