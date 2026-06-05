@@ -1,6 +1,7 @@
-# YouTube Quality & Layout
+# no-icks-tube
 
-A browser extension (Firefox / Zen first, Chromium-compatible) that:
+A browser extension (Firefox / Zen first, Chromium-compatible) that takes the
+icks out of YouTube:
 
 1. **Sets a default video quality.** Picks the highest quality inside a range
    you choose — e.g. "best available, but at least 1080p" — once per video. You
@@ -51,3 +52,7 @@ signed via addons.mozilla.org, or use Firefox Developer/Nightly with
 - "Force quality" sets a *range* on the player (`setPlaybackQualityRange`), which
   YouTube treats as a strong hint; it generally sticks but can be overridden if
   a level genuinely isn't available for that video.
+
+## License
+
+[MIT](LICENSE) © 2026 HADO564

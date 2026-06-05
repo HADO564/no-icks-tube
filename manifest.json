@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "YouTube Quality & Layout",
+  "name": "no-icks-tube",
   "version": "1.0.0",
-  "description": "Force a preferred video quality (or quality range) and make the suggested-videos sidebar scroll independently.",
+  "description": "Force a preferred video quality (or range), scroll suggested videos independently, and view comments as collapsible cards.",
   "permissions": ["storage"],
   "host_permissions": ["https://www.youtube.com/*", "https://m.youtube.com/*"],
   "content_scripts": [
