@@ -5,6 +5,8 @@
   --text: #f1f1f1;
   --muted: #aaa;
   --accent: #3ea6ff;
+  --yt-red: #f00;        /* YouTube brand red */
+  --yt-red-hover: #c00;
   --border: #333;
 }
 @media (prefers-color-scheme: light) {
@@ -117,9 +119,14 @@ select:disabled {
   text-decoration: none;
   cursor: pointer;
 }
-.btn:hover { border-color: var(--accent); }
+.btn:hover { border-color: var(--yt-red); color: var(--yt-red); }
 .btn.primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #000;
+  background: var(--yt-red);
+  border-color: var(--yt-red);
+  color: #fff;
+}
+.btn.primary:hover {
+  background: var(--yt-red-hover);
+  border-color: var(--yt-red-hover);
+  color: #fff;
 }
