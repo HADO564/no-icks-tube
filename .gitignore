@@ -10,3 +10,8 @@ web-ext-artifacts/
 
 # Node (if tooling is added later)
 node_modules/
+
+# Secrets — never commit real credentials
+.env
+.env.*
+!.env.example
