@@ -6,13 +6,16 @@ icks out of YouTube:
 1. **Sets a default video quality.** Picks the highest quality inside a range
    you choose — e.g. "best available, but at least 1080p" — once per video. You
    can still override it manually in the player; the extension won't fight you.
-2. **Independent suggested-videos scrolling.** Turns the related-videos column
+2. **Disables autoplay.** Switches YouTube's Autoplay toggle off on each video
+   so it never auto-advances to the next one. Flip it back on in the player any
+   time.
+3. **Independent suggested-videos scrolling.** Turns the related-videos column
    into its own scroll container so scrolling there doesn't move the video, and
    scrolling over the video scrolls down into the comments.
-3. **Comments scroll pane + "Back to video".** Gives the comments their own
+4. **Comments scroll pane + "Back to video".** Gives the comments their own
    sticky scrollbar, and shows a fixed *Back to video* button once the player
    scrolls out of view that jumps you back to the top.
-4. **Comments as cards.** Lays comments out as vertical cards in a responsive
+5. **Comments as cards.** Lays comments out as vertical cards in a responsive
    grid. Clicking a comment's *Read more* (or opening its replies) expands that
    card to a full-width row; *Show less* shrinks it back. Done purely with CSS
    `:has()`, so it tracks YouTube's own expand state.

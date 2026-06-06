@@ -50,6 +50,15 @@
       ],
     },
     {
+      id: "autoplay",
+      ick: "Autoplay keeps starting the next video",
+      fix: "Switches YouTube's Autoplay toggle off on each video so nothing auto-advances. You can still flip it back on in the player.",
+      area: "Player",
+      settings: [
+        { key: "disableAutoplay", type: "toggle", default: true, primary: true },
+      ],
+    },
+    {
       id: "suggestions-scroll",
       ick: "Scrolling suggested videos scrolls the whole page and the video disappears",
       fix: "Turns the suggested-videos column into its own scroll container, independent of the video and comments.",

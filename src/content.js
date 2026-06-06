@@ -21,6 +21,7 @@
     qualityEnabled: true,
     maxQuality: 4320,
     minQuality: 1080,
+    disableAutoplay: true,
     sidebarEnabled: true,
     commentsScroll: true,
     commentsCards: true,
@@ -92,6 +93,25 @@
     } else if (existing) {
       existing.remove();
     }
+  }
+
+  // ---- Disable autoplay (the "Autoplay" next-video toggle) ----------------
+  let disableAutoplayOn = false;
+
+  // YouTube's player Autoplay switch. aria-checked reflects on/off; we only
+  // click when it's on, so we never accidentally turn it back on, and we don't
+  // fight a manual toggle within a video (it persists off across navigations).
+  function enforceAutoplayOff(tries = 16, delay = 600) {
+    if (!disableAutoplayOn) return;
+    if (!location.pathname.startsWith("/watch")) return;
+    const btn = document.querySelector(".ytp-autonav-toggle-button");
+    if (!btn) {
+      if (tries > 0) {
+        setTimeout(() => enforceAutoplayOff(tries - 1, delay), delay);
+      }
+      return;
+    }
+    if (btn.getAttribute("aria-checked") === "true") btn.click();
   }
 
   // ---- Comments as an independent scroll pane + "Back to video" button ----
@@ -432,6 +452,8 @@
 
   function applyAll(settings) {
     setSidebar(settings.sidebarEnabled);
+    disableAutoplayOn = settings.disableAutoplay;
+    if (disableAutoplayOn) enforceAutoplayOff();
     setCommentsPane(settings.commentsScroll);
     setComments(settings.commentsCards, settings.cardMinWidth, settings.cardMinHeight);
     commentsOn = settings.commentsCards;
@@ -451,6 +473,7 @@
     () => {
       loadSettings().then((s) => postSettings(s));
       scheduleRecompute(); // re-evaluate the Back-to-video button for the new page
+      enforceAutoplayOff(); // keep autoplay off on the new video
     },
     true
   );
