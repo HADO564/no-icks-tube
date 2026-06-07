@@ -23,6 +23,31 @@ icks out of YouTube:
 Configure all of these in the extension's options/popup — a "Fix your icks"
 list where each toggle removes one ick.
 
+## Install
+
+### Firefox / Zen (and other Firefox-based browsers)
+
+### ⬇️ [Download no-icks-tube (.xpi)](https://github.com/HADO564/no-icks-tube/releases/latest/download/no-icks-tube.xpi)
+
+That link always points at the newest signed version.
+
+1. Click the download link **in Firefox or Zen** (not Chrome).
+2. Firefox will ask **“Add no-icks-tube?”** — click **Add**, then **Okay**.
+   - If it downloads the file instead of asking: open `about:addons`, click the
+     gear ⚙ at the top-right → **Install Add-on From File…** → choose the
+     downloaded `no-icks-tube.xpi`.
+3. Click the no-icks-tube icon in the toolbar to open the **Fix your icks**
+   settings. (If you don't see it, click the puzzle-piece 🧩 icon and pin it.)
+
+The add-on is signed by Mozilla, so it installs permanently and survives
+restarts. To update later, just install a newer `.xpi` the same way — it
+upgrades in place and keeps your settings.
+
+### Chrome / Edge / Brave
+
+The `.xpi` is Firefox-only. On Chromium browsers, install from source — see
+[Run from source](#run-from-source-development) below.
+
 ## Got an ick?
 
 no-icks-tube is built around **icks** — the things about YouTube that bug you.
@@ -45,7 +70,9 @@ and the options UI + defaults update automatically.
   Picks the best quality within your range and re-applies on navigation.
 - `options/` — settings UI (also used as the toolbar popup).
 
-## Load it temporarily
+## Run from source (development)
+
+For hacking on the extension, or to use it on Chromium.
 
 ### Firefox / Zen
 
@@ -53,9 +80,8 @@ and the options UI + defaults update automatically.
 2. **Load Temporary Add-on…** → pick `manifest.json` in this folder.
 3. Open YouTube, click the toolbar icon to set preferences.
 
-(Temporary add-ons are removed on restart. For permanent use the add-on must be
-signed via addons.mozilla.org, or use Firefox Developer/Nightly with
-`xpinstall.signatures.required = false`.)
+(Temporary add-ons are removed on restart — for a permanent install use the
+[signed `.xpi`](#install) above.)
 
 ### Chromium (Chrome / Edge / Brave)
 
