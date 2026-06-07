@@ -72,6 +72,31 @@ Not required for unlisted, but handy if you ever go public:
 
 ---
 
+## Cutting a release
+
+`release.ps1` ties signing and publishing together so the download link stays
+fresh. Full flow for a new version:
+
+```powershell
+# 1. Bump "version" in manifest.json, commit and push.
+# 2. Sign + publish in one step:
+./release.ps1 -Sign                       # auto-generated notes
+./release.ps1 -Sign -NotesFile notes.md   # or supply your own notes
+```
+
+It signs (via `sign.ps1`/`.env`), then creates the `v<version>` release with
+**both** assets:
+
+- `no-icks-tube-<version>.xpi` — the immutable per-version file
+- `no-icks-tube.xpi` — a stable name so
+  `…/releases/latest/download/no-icks-tube.xpi` (the README download link)
+  always resolves to the newest build
+
+`release.ps1` refuses to run if the release tag already exists (bump the version
+first). Pass `-Draft` to stage it without publishing.
+
+---
+
 ## Notes
 
 - **Version bumps:** AMO refuses to re-sign an already-signed version number.
