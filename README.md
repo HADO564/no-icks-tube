@@ -9,13 +9,17 @@ icks out of YouTube:
 2. **Disables autoplay.** Switches YouTube's Autoplay toggle off on each video
    so it never auto-advances to the next one. Flip it back on in the player any
    time.
-3. **Independent suggested-videos scrolling.** Turns the related-videos column
+3. **Resumes videos where you actually left off.** Remembers your exact
+   position in every video and seeks back to it when the video loads again —
+   after a refresh, a crash, or coming back days later. Links with an explicit
+   `?t=` timestamp still win, and videos you finished start fresh.
+4. **Independent suggested-videos scrolling.** Turns the related-videos column
    into its own scroll container so scrolling there doesn't move the video, and
    scrolling over the video scrolls down into the comments.
-4. **Comments scroll pane + "Back to video".** Gives the comments their own
+5. **Comments scroll pane + "Back to video".** Gives the comments their own
    sticky scrollbar, and shows a fixed *Back to video* button once the player
    scrolls out of view that jumps you back to the top.
-5. **Comments as cards.** Lays comments out as vertical cards in a responsive
+6. **Comments as cards.** Lays comments out as vertical cards in a responsive
    grid. Clicking a comment's *Read more* (or opening its replies) expands that
    card to a full-width row; *Show less* shrinks it back. Done purely with CSS
    `:has()`, so it tracks YouTube's own expand state.

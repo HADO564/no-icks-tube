@@ -22,6 +22,7 @@
     maxQuality: 4320,
     minQuality: 1080,
     disableAutoplay: true,
+    resumeEnabled: true,
     sidebarEnabled: true,
     commentsScroll: true,
     commentsCards: true,
@@ -113,6 +114,168 @@
     }
     if (btn.getAttribute("aria-checked") === "true") btn.click();
   }
+
+  // ---- Resume playback where you left off ---------------------------------
+  // YouTube's own resume is unreliable: a refresh, crash, or revisit often
+  // restarts a video at 0:00 or a stale position. We keep the exact position
+  // per video id in the page's localStorage (synchronous, so the pagehide
+  // flush below actually lands) and seek back once the video is ready.
+  const RESUME_KEY = "ytql-resume";
+  const RESUME_SAVE_EVERY = 2000; // ms between throttled saves while playing
+  const RESUME_MIN_POS = 10; // positions under this aren't worth restoring
+  const RESUME_END_GUARD = 15; // within this of the end => start fresh
+  const RESUME_TOLERANCE = 5; // already within this of saved => leave it be
+  const RESUME_MAX_AGE_DAYS = 45;
+  const RESUME_MAX_ENTRIES = 300;
+
+  let resumeOn = false;
+  // Video id whose restore has been decided (seeked, or concluded we
+  // shouldn't). Saves for an id are gated on this so a fresh video playing
+  // from 0:00 can't overwrite its own saved position before we've used it.
+  let resumeDecidedFor = null;
+  let lastResumeSave = 0;
+
+  function watchVideoId() {
+    if (!location.pathname.startsWith("/watch")) return null;
+    return new URLSearchParams(location.search).get("v");
+  }
+
+  function mainWatchVideo() {
+    // Only the watch-page player — never inline hover-preview players.
+    return document.querySelector("#movie_player video");
+  }
+
+  function urlHasTimestamp() {
+    const sp = new URLSearchParams(location.search);
+    return sp.has("t") || sp.has("start") || /[#&?]t=/.test(location.hash);
+  }
+
+  function readResumeMap() {
+    try {
+      const map = JSON.parse(localStorage.getItem(RESUME_KEY) || "{}");
+      return map && typeof map === "object" ? map : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function writeResumeMap(map) {
+    // Prune: drop stale entries, then cap the count (oldest first).
+    const cutoff = Date.now() - RESUME_MAX_AGE_DAYS * 864e5;
+    let ids = Object.keys(map).filter((id) => {
+      if (!map[id] || map[id].at < cutoff) {
+        delete map[id];
+        return false;
+      }
+      return true;
+    });
+    if (ids.length > RESUME_MAX_ENTRIES) {
+      ids.sort((a, b) => map[a].at - map[b].at);
+      for (const id of ids.slice(0, ids.length - RESUME_MAX_ENTRIES)) {
+        delete map[id];
+      }
+    }
+    try {
+      localStorage.setItem(RESUME_KEY, JSON.stringify(map));
+    } catch (e) {
+      /* storage full / blocked — resume just won't persist */
+    }
+  }
+
+  function clearResumeEntry(id) {
+    const map = readResumeMap();
+    if (id in map) {
+      delete map[id];
+      writeResumeMap(map);
+    }
+  }
+
+  function saveResumePosition(video, force) {
+    if (!resumeOn || !video) return;
+    const id = watchVideoId();
+    if (!id || id !== resumeDecidedFor) return; // restore hasn't run yet
+    if (video !== mainWatchVideo()) return;
+    const now = Date.now();
+    if (!force && now - lastResumeSave < RESUME_SAVE_EVERY) return;
+    lastResumeSave = now;
+
+    const t = video.currentTime;
+    const d = video.duration;
+    if (!isFinite(t) || t < 1) return;
+    if (isFinite(d) && d > 0 && t > d - RESUME_END_GUARD) {
+      clearResumeEntry(id); // effectively finished — start over next time
+      return;
+    }
+    const map = readResumeMap();
+    map[id] = { t: Math.floor(t), at: now };
+    writeResumeMap(map);
+  }
+
+  /** Seek the current video back to its saved position, once it's ready. */
+  function restoreResumePosition(tries = 20, delay = 500) {
+    if (!resumeOn) return;
+    const id = watchVideoId();
+    if (!id || id === resumeDecidedFor) return;
+    const video = mainWatchVideo();
+    if (!video || !isFinite(video.duration) || video.duration <= 0) {
+      if (tries > 0) {
+        setTimeout(() => restoreResumePosition(tries - 1, delay), delay);
+      }
+      return;
+    }
+
+    resumeDecidedFor = id; // decide once per video, whatever we conclude
+    if (urlHasTimestamp()) return; // an explicit ?t= link wins
+
+    const saved = readResumeMap()[id];
+    if (!saved || !isFinite(saved.t) || saved.t < RESUME_MIN_POS) return;
+    if (saved.t > video.duration - RESUME_END_GUARD) {
+      clearResumeEntry(id); // was finished — start fresh
+      return;
+    }
+    // If YouTube already resumed close enough, don't cause a visible jump.
+    if (Math.abs(video.currentTime - saved.t) <= RESUME_TOLERANCE) return;
+    try {
+      video.currentTime = saved.t;
+    } catch (e) {
+      /* not seekable yet; the next save will simply re-record from here */
+    }
+  }
+
+  // Track the position while playing (timeupdate fires ~4x/s; throttled).
+  document.addEventListener(
+    "timeupdate",
+    (e) => {
+      if (e.target && e.target.tagName === "VIDEO") saveResumePosition(e.target);
+    },
+    true
+  );
+
+  // Flush un-throttled at the moments we might lose the page or the video.
+  window.addEventListener("pagehide", () => saveResumePosition(mainWatchVideo(), true));
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") {
+      saveResumePosition(mainWatchVideo(), true);
+    }
+  });
+  window.addEventListener(
+    "yt-navigate-start",
+    () => saveResumePosition(mainWatchVideo(), true),
+    true
+  );
+
+  // Watched to the very end: forget the position so a revisit starts fresh.
+  document.addEventListener(
+    "ended",
+    (e) => {
+      if (!resumeOn) return;
+      if (e.target && e.target.tagName === "VIDEO" && e.target === mainWatchVideo()) {
+        const id = watchVideoId();
+        if (id) clearResumeEntry(id);
+      }
+    },
+    true
+  );
 
   // ---- Comments as an independent scroll pane + "Back to video" button ----
   const COMMENTS_PANE_STYLE_ID = "ytql-commentspane-style";
@@ -454,6 +617,8 @@
     setSidebar(settings.sidebarEnabled);
     disableAutoplayOn = settings.disableAutoplay;
     if (disableAutoplayOn) enforceAutoplayOff();
+    resumeOn = settings.resumeEnabled;
+    if (resumeOn) restoreResumePosition();
     setCommentsPane(settings.commentsScroll);
     setComments(settings.commentsCards, settings.cardMinWidth, settings.cardMinHeight);
     commentsOn = settings.commentsCards;
@@ -474,6 +639,7 @@
       loadSettings().then((s) => postSettings(s));
       scheduleRecompute(); // re-evaluate the Back-to-video button for the new page
       enforceAutoplayOff(); // keep autoplay off on the new video
+      restoreResumePosition(); // jump back to the saved spot on the new video
     },
     true
   );

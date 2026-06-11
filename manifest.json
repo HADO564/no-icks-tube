@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "no-icks-tube",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Force a preferred video quality (or range), scroll suggested videos independently, and view comments as collapsible cards.",
   "permissions": ["storage"],
   "host_permissions": ["https://www.youtube.com/*", "https://m.youtube.com/*"],

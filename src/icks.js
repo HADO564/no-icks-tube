@@ -59,6 +59,15 @@
       ],
     },
     {
+      id: "wrong-resume",
+      ick: "Videos restart from the wrong timestamp after a refresh",
+      fix: "Remembers exactly where you were in every video and seeks back there when it loads again — after a refresh, a crash, or coming back days later. Links with an explicit ?t= timestamp still win, and videos you finished start fresh.",
+      area: "Player",
+      settings: [
+        { key: "resumeEnabled", type: "toggle", default: true, primary: true },
+      ],
+    },
+    {
       id: "suggestions-scroll",
       ick: "Scrolling suggested videos scrolls the whole page and the video disappears",
       fix: "Turns the suggested-videos column into its own scroll container, independent of the video and comments.",
