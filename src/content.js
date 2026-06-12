@@ -23,6 +23,7 @@
     minQuality: 1080,
     disableAutoplay: true,
     resumeEnabled: true,
+    volumeMixer: true,
     sidebarEnabled: true,
     commentsScroll: true,
     commentsCards: true,
@@ -276,6 +277,67 @@
     },
     true
   );
+
+  // ---- Volume bridge: popup mixer <-> page-context player -----------------
+  // The popup asks this tab for its player state / sets its volume. The
+  // player API lives in the page context (inject.js), so we relay over
+  // postMessage in both directions.
+  let lastVolumeState = null;
+
+  window.addEventListener("message", (event) => {
+    if (event.source !== window) return;
+    const d = event.data;
+    if (d && d.__ytql === "volume-state" && d.payload) {
+      lastVolumeState = d.payload;
+    }
+  });
+
+  function mixerVideo() {
+    // Watch page or Shorts — pages where "this tab's volume" means something.
+    return document.querySelector("#movie_player video, #shorts-player video");
+  }
+
+  api.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    if (!msg || typeof msg.ytql !== "string") return;
+
+    if (msg.ytql === "volume-get") {
+      const video = mixerVideo();
+      if (!video) {
+        sendResponse(null); // no video here — the mixer skips this tab
+        return;
+      }
+      lastVolumeState = null;
+      window.postMessage({ __ytql: "volume-cmd", cmd: "get" }, "*");
+      // The page answers in a microtask-ish moment; give it a beat, then fall
+      // back to the <video> element if the player API didn't reply.
+      setTimeout(() => {
+        const state = lastVolumeState || {
+          volume: Math.round(video.volume * 100),
+          muted: video.muted,
+        };
+        state.playing = !video.paused && !video.ended;
+        sendResponse(state);
+      }, 80);
+      return true; // keep the channel open for the async sendResponse
+    }
+
+    if (msg.ytql === "volume-set") {
+      window.postMessage(
+        { __ytql: "volume-cmd", cmd: "set", value: msg.value },
+        "*"
+      );
+      sendResponse(true);
+      return;
+    }
+
+    if (msg.ytql === "volume-mute") {
+      window.postMessage(
+        { __ytql: "volume-cmd", cmd: msg.muted ? "mute" : "unmute" },
+        "*"
+      );
+      sendResponse(true);
+    }
+  });
 
   // ---- Comments as an independent scroll pane + "Back to video" button ----
   const COMMENTS_PANE_STYLE_ID = "ytql-commentspane-style";

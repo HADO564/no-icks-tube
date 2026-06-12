@@ -13,6 +13,18 @@
         <p class="tagline">Tick off the YouTube icks you want gone.</p>
       </header>
 
+      <!-- Volume mixer (the "tab-volumes" ick): one live row per YouTube tab
+           that has a video. Rows are built by options.js; the whole section
+           hides when the ick's toggle is off. -->
+      <section class="card" id="mixer" hidden>
+        <div class="row">
+          <h2 class="mixer-title">🔊 Volume mixer</h2>
+          <span class="area">YouTube tabs</span>
+        </div>
+        <div id="mixerRows"></div>
+        <p class="hint" id="mixerEmpty">No YouTube tabs with a video right now.</p>
+      </section>
+
       <!-- Ick cards are generated here from the registry (src/icks.js). -->
       <div id="icks"></div>
 

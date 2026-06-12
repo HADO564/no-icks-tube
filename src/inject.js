@@ -146,11 +146,70 @@
     true
   );
 
-  // Receive settings from the content script.
+  // ---- Volume bridge (for the popup's volume mixer) -----------------------
+  // The player API is the only way to change volume so YouTube's own volume
+  // slider stays in sync (and the value persists like a manual change).
+  function postVolumeState() {
+    const player = getPlayer();
+    if (!player || typeof player.getVolume !== "function") return;
+    try {
+      window.postMessage(
+        {
+          __ytql: "volume-state",
+          payload: {
+            volume: Math.round(player.getVolume()),
+            muted:
+              typeof player.isMuted === "function" ? player.isMuted() : false,
+          },
+        },
+        "*"
+      );
+    } catch (e) {
+      /* player mid-teardown; the next poll will catch up */
+    }
+  }
+
+  function handleVolumeCommand(data) {
+    const player = getPlayer();
+    if (player) {
+      try {
+        if (data.cmd === "set" && typeof player.setVolume === "function") {
+          // Dragging the slider up should always become audible.
+          if (
+            data.value > 0 &&
+            typeof player.isMuted === "function" &&
+            player.isMuted() &&
+            typeof player.unMute === "function"
+          ) {
+            player.unMute();
+          }
+          player.setVolume(Math.max(0, Math.min(100, data.value)));
+        } else if (data.cmd === "mute" && typeof player.mute === "function") {
+          player.mute();
+        } else if (
+          data.cmd === "unmute" &&
+          typeof player.unMute === "function"
+        ) {
+          player.unMute();
+        }
+      } catch (e) {
+        /* not ready; state below reports whatever is true */
+      }
+    }
+    // Every command — including a plain "get" — answers with fresh state.
+    postVolumeState();
+  }
+
+  // Receive settings + volume commands from the content script.
   window.addEventListener("message", (event) => {
     if (event.source !== window) return;
     const data = event.data;
-    if (!data || data.__ytql !== "settings") return;
+    if (!data) return;
+    if (data.__ytql === "volume-cmd") {
+      handleVolumeCommand(data);
+      return;
+    }
+    if (data.__ytql !== "settings") return;
     settings = Object.assign(settings, data.payload);
     // Settings changed intentionally: re-apply once for the current video.
     appliedFor = null;

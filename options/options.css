@@ -97,6 +97,65 @@ select:disabled {
   white-space: nowrap;
 }
 
+/* Volume mixer */
+.mixer-title { font-size: 15px; margin: 0; }
+
+.mixer-row {
+  padding: 12px 0 4px;
+}
+.mixer-row + .mixer-row {
+  border-top: 1px solid var(--border);
+}
+
+.mixer-tab {
+  display: block;
+  width: 100%;
+  padding: 0 0 6px;
+  background: none;
+  border: none;
+  text-align: left;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mixer-tab:hover { color: var(--accent); }
+.mixer-tab .state { color: var(--muted); font-weight: 400; }
+
+.mixer-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.mixer-controls input[type="range"] {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--yt-red);
+  cursor: pointer;
+}
+.mixer-pct {
+  width: 52px;
+  text-align: right;
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.mixer-mute {
+  padding: 4px 9px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+.mixer-mute:hover { border-color: var(--yt-red); }
+
 /* Footer: suggest / browse icks */
 .foot {
   margin-top: 22px;

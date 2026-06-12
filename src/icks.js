@@ -68,6 +68,15 @@
       ],
     },
     {
+      id: "tab-volumes",
+      ick: "No one place to control the volume of every YouTube tab",
+      fix: "Adds a Volume mixer at the top of this popup: every YouTube tab with a video gets a live slider and a mute button, so you can turn one tab down (or jump to it) without hunting through your tabs.",
+      area: "Player",
+      settings: [
+        { key: "volumeMixer", type: "toggle", default: true, primary: true },
+      ],
+    },
+    {
       id: "suggestions-scroll",
       ick: "Scrolling suggested videos scrolls the whole page and the video disappears",
       fix: "Turns the suggested-videos column into its own scroll container, independent of the video and comments.",

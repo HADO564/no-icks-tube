@@ -13,13 +13,18 @@ icks out of YouTube:
    position in every video and seeks back to it when the video loads again —
    after a refresh, a crash, or coming back days later. Links with an explicit
    `?t=` timestamp still win, and videos you finished start fresh.
-4. **Independent suggested-videos scrolling.** Turns the related-videos column
+4. **Volume mixer for all your YouTube tabs.** The popup lists every open
+   YouTube tab that has a video, each with a live volume slider and mute
+   button — turn one tab down without hunting for it, or click its title to
+   jump there. Volume changes go through YouTube's own player API, so the
+   player's volume control stays in sync.
+5. **Independent suggested-videos scrolling.** Turns the related-videos column
    into its own scroll container so scrolling there doesn't move the video, and
    scrolling over the video scrolls down into the comments.
-5. **Comments scroll pane + "Back to video".** Gives the comments their own
+6. **Comments scroll pane + "Back to video".** Gives the comments their own
    sticky scrollbar, and shows a fixed *Back to video* button once the player
    scrolls out of view that jumps you back to the top.
-6. **Comments as cards.** Lays comments out as vertical cards in a responsive
+7. **Comments as cards.** Lays comments out as vertical cards in a responsive
    grid. Clicking a comment's *Read more* (or opening its replies) expands that
    card to a full-width row; *Show less* shrinks it back. Done purely with CSS
    `:has()`, so it tracks YouTube's own expand state.

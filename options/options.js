@@ -129,6 +129,155 @@
     return out;
   }
 
+  // ---- Volume mixer (the "tab-volumes" ick) -------------------------------
+  // One row per YouTube tab that has a video: live slider + mute + click the
+  // title to jump to the tab. Tabs answer via their content script (which
+  // relays to the page-context player API).
+  const MIXER_POLL_MS = 1500;
+  let mixerTimer = null;
+  const mixerRows = new Map(); // tabId -> row entry
+
+  function ytTabs() {
+    return new Promise((resolve) => {
+      try {
+        api.tabs
+          .query({ url: ["https://www.youtube.com/*", "https://m.youtube.com/*"] })
+          .then(resolve, () => resolve([]));
+      } catch (e) {
+        resolve([]);
+      }
+    });
+  }
+
+  function askTab(tabId, msg) {
+    return new Promise((resolve) => {
+      try {
+        // Rejects when the tab has no content script (asleep, error page…) —
+        // those tabs simply don't appear in the mixer.
+        api.tabs.sendMessage(tabId, msg).then(resolve, () => resolve(null));
+      } catch (e) {
+        resolve(null);
+      }
+    });
+  }
+
+  function tabLabel(tab) {
+    return (tab.title || "YouTube").replace(/ - YouTube$/, "");
+  }
+
+  function buildMixerRow(tab) {
+    const row = document.createElement("div");
+    row.className = "mixer-row";
+
+    const title = document.createElement("button");
+    title.className = "mixer-tab";
+    title.type = "button";
+    title.title = "Go to this tab";
+    title.addEventListener("click", () => {
+      api.tabs.update(tab.id, { active: true });
+      if (api.windows && tab.windowId != null) {
+        api.windows.update(tab.windowId, { focused: true });
+      }
+    });
+
+    const controls = document.createElement("div");
+    controls.className = "mixer-controls";
+
+    const slider = document.createElement("input");
+    slider.type = "range";
+    slider.min = "0";
+    slider.max = "100";
+    slider.step = "1";
+
+    const pct = document.createElement("span");
+    pct.className = "mixer-pct";
+
+    const mute = document.createElement("button");
+    mute.className = "mixer-mute";
+    mute.type = "button";
+
+    const entry = { row, title, slider, pct, mute, muted: false, dragging: false };
+
+    slider.addEventListener("input", () => {
+      entry.dragging = true; // don't let the poll fight the drag
+      const v = parseInt(slider.value, 10);
+      pct.textContent = v + "%";
+      askTab(tab.id, { ytql: "volume-set", value: v });
+    });
+    slider.addEventListener("change", () => {
+      entry.dragging = false;
+    });
+
+    mute.addEventListener("click", () => {
+      askTab(tab.id, { ytql: "volume-mute", muted: !entry.muted }).then(refreshMixer);
+    });
+
+    controls.append(slider, pct, mute);
+    row.append(title, controls);
+    return entry;
+  }
+
+  function updateMixerRow(entry, tab, state) {
+    entry.title.textContent = "";
+    entry.title.append(tabLabel(tab));
+    if (!state.playing) {
+      const paused = document.createElement("span");
+      paused.className = "state";
+      paused.textContent = " — paused";
+      entry.title.appendChild(paused);
+    }
+    entry.muted = !!state.muted;
+    entry.mute.textContent = entry.muted ? "🔇" : "🔊";
+    entry.mute.title = entry.muted ? "Unmute this tab" : "Mute this tab";
+    if (!entry.dragging) {
+      entry.slider.value = String(state.volume);
+      entry.pct.textContent = entry.muted ? "muted" : state.volume + "%";
+    }
+  }
+
+  async function refreshMixer() {
+    if (document.hidden) return; // options page in a background tab
+    const tabs = await ytTabs();
+    const states = await Promise.all(
+      tabs.map((t) => askTab(t.id, { ytql: "volume-get" }))
+    );
+
+    const container = $("mixerRows");
+    const seen = new Set();
+    tabs.forEach((tab, i) => {
+      const state = states[i];
+      if (!state) return; // no video in that tab
+      seen.add(tab.id);
+      let entry = mixerRows.get(tab.id);
+      if (!entry) {
+        entry = buildMixerRow(tab);
+        mixerRows.set(tab.id, entry);
+        container.appendChild(entry.row);
+      }
+      updateMixerRow(entry, tab, state);
+    });
+
+    // Drop rows for tabs that closed or no longer have a video.
+    for (const [id, entry] of mixerRows) {
+      if (!seen.has(id)) {
+        entry.row.remove();
+        mixerRows.delete(id);
+      }
+    }
+    $("mixerEmpty").hidden = seen.size > 0;
+  }
+
+  function setMixerEnabled(on) {
+    on = on && !!(api.tabs && api.tabs.query); // needs the tabs API to exist
+    $("mixer").hidden = !on;
+    clearInterval(mixerTimer);
+    mixerTimer = null;
+    if (on) {
+      refreshMixer();
+      mixerTimer = setInterval(refreshMixer, MIXER_POLL_MS);
+    }
+  }
+
   let savedTimer = null;
   function flashSaved() {
     $("savedNote").hidden = false;
@@ -144,7 +293,9 @@
     const invalid = rangeError();
     $("rangeError").hidden = !invalid;
     if (invalid) return;
-    api.storage.sync.set(collect());
+    const settings = collect();
+    api.storage.sync.set(settings);
+    setMixerEnabled(!!settings.volumeMixer);
     flashSaved();
   }
 
@@ -181,6 +332,7 @@
       else el.value = String(stored[key]);
     }
     syncAll();
+    setMixerEnabled(!!stored.volumeMixer);
 
     // Save on any change.
     for (const key in inputs) {
