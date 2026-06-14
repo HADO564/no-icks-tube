@@ -189,3 +189,111 @@ select:disabled {
   border-color: var(--yt-red-hover);
   color: #fff;
 }
+.btn.block {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+/* ---- Catalog: search + summary ---------------------------------------- */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+.search {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 12px;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 14px;
+}
+.search:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.summary {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Catalog: collapsible area groups --------------------------------- */
+.group { margin-bottom: 18px; }
+
+.group-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 4px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+.group-name { flex: 1; text-align: left; }
+.group-count {
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.chevron {
+  font-size: 12px;
+  color: var(--muted);
+  transition: transform 0.12s ease;
+}
+.group.collapsed .chevron { transform: rotate(-90deg); }
+.group.collapsed .group-body { display: none; }
+
+.group-body { padding-top: 14px; }
+/* Cards already carry their own bottom margin; tighten the last one. */
+.group-body .card:last-child { margin-bottom: 0; }
+
+/* ---- "New" badge ------------------------------------------------------- */
+.badge {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #fff;
+  background: var(--yt-red);
+}
+
+.empty {
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
+  padding: 12px 0;
+}
+
+/* ---- Popup surface (narrower than the catalog tab) -------------------- */
+body.popup main {
+  width: 360px;
+  max-width: 360px;
+  padding: 16px 14px 18px;
+}
+body.popup h1 { margin: 0 0 14px; font-size: 18px; }
+body.popup .card { padding: 14px; margin-bottom: 14px; }
+
+.quick-row {
+  font-weight: 500;
+  padding: 7px 0;
+}
+.quick-row + .quick-row { border-top: 1px solid var(--border); }
+#quickRows { margin-top: 4px; }

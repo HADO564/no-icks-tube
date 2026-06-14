@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>no-icks-tube</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body class="popup">
+    <main>
+      <header class="head">
+        <h1>no-icks-tube</h1>
+      </header>
+
+      <!-- Volume mixer (the "tab-volumes" ick): one live row per YouTube tab
+           that has a video. Rows are built by popup.js; the whole section
+           hides when the ick's toggle is off. -->
+      <section class="card" id="mixer" hidden>
+        <div class="row">
+          <h2 class="mixer-title">🔊 Volume mixer</h2>
+          <span class="area">YouTube tabs</span>
+        </div>
+        <div id="mixerRows"></div>
+        <p class="hint" id="mixerEmpty">No YouTube tabs with a video right now.</p>
+      </section>
+
+      <!-- Quick on/off for the icks you currently have enabled. Built by
+           popup.js; the full catalog lives behind "Manage all icks". -->
+      <section class="card" id="quick">
+        <div class="row">
+          <h2 class="mixer-title">Your icks</h2>
+          <span class="summary" id="quickSummary"></span>
+        </div>
+        <div id="quickRows"></div>
+        <p class="hint" id="quickEmpty" hidden>
+          No icks enabled. Open the catalog to switch some on.
+        </p>
+      </section>
+
+      <button id="manage" class="btn primary block" type="button">
+        ⚙️ Manage all icks
+      </button>
+    </main>
+
+    <script src="../src/icks.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>

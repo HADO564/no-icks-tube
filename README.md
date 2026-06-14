@@ -45,8 +45,9 @@ That link always points at the newest signed version.
    - If it downloads the file instead of asking: open `about:addons`, click the
      gear ⚙ at the top-right → **Install Add-on From File…** → choose the
      downloaded `no-icks-tube.xpi`.
-3. Click the no-icks-tube icon in the toolbar to open the **Fix your icks**
-   settings. (If you don't see it, click the puzzle-piece 🧩 icon and pin it.)
+3. Click the no-icks-tube icon in the toolbar to open the popup (volume mixer +
+   quick toggles); hit **Manage all icks** there for the full catalog. (If you
+   don't see the icon, click the puzzle-piece 🧩 icon and pin it.)
 
 The add-on is signed by Mozilla, so it installs permanently and survives
 restarts. To update later, just install a newer `.xpi` the same way — it
@@ -75,9 +76,19 @@ and the options UI + defaults update automatically.
   from `storage.sync`, injects the page script, and injects/removes the sidebar
   CSS. Reacts live to settings changes.
 - `src/inject.js` — runs in the **page** context so it can call YouTube's
-  internal player API (`getAvailableQualityLevels`, `setPlaybackQualityRange`).
-  Picks the best quality within your range and re-applies on navigation.
-- `options/` — settings UI (also used as the toolbar popup).
+  internal player API (`getAvailableQualityLevels`, `setPlaybackQualityRange`,
+  `getVolume`/`setVolume`). Picks the best quality within your range, re-applies
+  on navigation, and answers the popup's volume-mixer commands.
+- `src/icks.js` — the **ick registry**: every ick, its settings, defaults, the
+  area it belongs to, and the version it was `added` in. Loaded by the content
+  scripts, the popup, and the catalog alike.
+- `options/popup.html` + `popup.js` — the **toolbar popup**: the lightweight
+  day-to-day surface. Volume mixer for your YouTube tabs, quick on/off toggles
+  for the icks you have enabled, and a button into the full catalog.
+- `options/options.html` + `options.js` — the **catalog** (opens in a tab):
+  every ick grouped by area into collapsible sections, with a search box, live
+  per-area counts, and a *New* badge on icks added in the version you're
+  running. This is where you discover and configure fixes.
 
 ## Run from source (development)
 

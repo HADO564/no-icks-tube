@@ -1,5 +1,9 @@
-/* options.js — builds the "Fix your icks" page from the registry (icks.js)
- * and persists settings to storage.sync. */
+/* options.js — the full ick catalog. Builds collapsible, searchable groups
+ * from the registry (icks.js) and persists settings to storage.sync.
+ *
+ * The lightweight day-to-day surface (volume mixer + quick toggles) lives in
+ * the toolbar popup (popup.html / popup.js); this page is the place to browse
+ * and configure every ick. */
 (function () {
   "use strict";
 
@@ -10,6 +14,14 @@
   const $ = (id) => document.getElementById(id);
   // input element for each setting key, filled while building the UI.
   const inputs = {};
+  // One record per ick card: lets us count, filter and collapse cheaply.
+  const cards = []; // { ick, el, primaryKey, text }
+  const groups = []; // { area, section, body, countEl, cardRecs }
+
+  // Collapse state lives in this extension page's localStorage (not in the
+  // synced settings) so tidying the catalog never touches a user's choices.
+  const COLLAPSE_KEY = "noicks:collapsed";
+  let searching = false;
 
   // ---- Build one control for a setting -----------------------------------
   function buildControl(setting) {
@@ -60,6 +72,14 @@
     row.appendChild(label);
     card.appendChild(row);
 
+    // "New" badge while this ick shipped in the version you're running.
+    if (REG.isNew && REG.isNew(ick)) {
+      const badge = document.createElement("span");
+      badge.className = "badge";
+      badge.textContent = "New";
+      row.appendChild(badge);
+    }
+
     if (ick.area) {
       const tag = document.createElement("span");
       tag.className = "area";
@@ -96,7 +116,151 @@
       const on = toggle.checked;
       for (const s of subs) inputs[s.key].disabled = !on;
     };
+
+    cards.push({
+      ick,
+      el: card,
+      primaryKey: primary.key,
+      // Everything we let the search box match against, lower-cased once.
+      text: `${ick.ick} ${ick.fix} ${ick.area || ""}`.toLowerCase(),
+    });
     return card;
+  }
+
+  // ---- Group the cards into collapsible sections by area -----------------
+  function buildGroups() {
+    const container = $("groups");
+    const byArea = new Map(); // area -> card records (first-seen order)
+
+    // Build the cards first so `cards` is populated, then bucket by area.
+    for (const ick of REG.ICKS) buildIck(ick);
+
+    for (const rec of cards) {
+      const area = rec.ick.area || "Other";
+      if (!byArea.has(area)) byArea.set(area, []);
+      byArea.get(area).push(rec);
+    }
+
+    for (const [area, recs] of byArea) {
+      const section = document.createElement("section");
+      section.className = "group";
+      section.dataset.area = area;
+
+      const head = document.createElement("button");
+      head.className = "group-head";
+      head.type = "button";
+      head.setAttribute("aria-expanded", "true");
+
+      const chevron = document.createElement("span");
+      chevron.className = "chevron";
+      chevron.textContent = "▾";
+      const name = document.createElement("span");
+      name.className = "group-name";
+      name.textContent = area;
+      const count = document.createElement("span");
+      count.className = "group-count";
+
+      head.append(chevron, name, count);
+
+      const body = document.createElement("div");
+      body.className = "group-body";
+      for (const rec of recs) body.appendChild(rec.el);
+
+      const group = { area, section, body, countEl: count, cardRecs: recs };
+      head.addEventListener("click", () => {
+        if (searching) return; // collapse is meaningless mid-search
+        setCollapsed(group, !section.classList.contains("collapsed"), true);
+      });
+
+      section.append(head, body);
+      container.appendChild(section);
+      groups.push(group);
+    }
+  }
+
+  // ---- Collapse state -----------------------------------------------------
+  function loadCollapsed() {
+    try {
+      const raw = localStorage.getItem(COLLAPSE_KEY);
+      return raw ? new Set(JSON.parse(raw)) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function saveCollapsed() {
+    const collapsed = groups
+      .filter((g) => g.section.classList.contains("collapsed"))
+      .map((g) => g.area);
+    try {
+      localStorage.setItem(COLLAPSE_KEY, JSON.stringify(collapsed));
+    } catch (e) {
+      /* private mode / storage blocked — collapse just won't persist */
+    }
+  }
+
+  function setCollapsed(group, collapsed, persist) {
+    group.section.classList.toggle("collapsed", collapsed);
+    group.section
+      .querySelector(".group-head")
+      .setAttribute("aria-expanded", String(!collapsed));
+    if (persist) saveCollapsed();
+  }
+
+  function applyInitialCollapse() {
+    const saved = loadCollapsed();
+    for (const group of groups) {
+      let collapse;
+      if (saved) {
+        collapse = saved.has(group.area);
+      } else {
+        // First run: keep it tidy by folding away areas that are entirely off
+        // and have nothing new to show off.
+        collapse = group.cardRecs.every(
+          (r) => !inputs[r.primaryKey].checked && !(REG.isNew && REG.isNew(r.ick))
+        );
+      }
+      setCollapsed(group, collapse, false);
+    }
+  }
+
+  // ---- Live counts --------------------------------------------------------
+  function recount() {
+    let onTotal = 0;
+    for (const group of groups) {
+      const on = group.cardRecs.filter(
+        (r) => inputs[r.primaryKey].checked
+      ).length;
+      onTotal += on;
+      group.countEl.textContent = `${on} of ${group.cardRecs.length} on`;
+    }
+    $("summary").textContent = `${onTotal} of ${cards.length} icks on`;
+  }
+
+  // ---- Search -------------------------------------------------------------
+  function applySearch(raw) {
+    const q = raw.trim().toLowerCase();
+    searching = q.length > 0;
+    let totalMatches = 0;
+
+    for (const group of groups) {
+      let groupMatches = 0;
+      for (const rec of group.cardRecs) {
+        const hit = !q || rec.text.includes(q);
+        rec.el.hidden = !hit;
+        if (hit) groupMatches++;
+      }
+      totalMatches += groupMatches;
+      // Hide groups with no hits; while searching, force every group open so
+      // matches are never buried in a collapsed section.
+      group.section.hidden = q && groupMatches === 0;
+      if (searching) setCollapsed(group, false, false);
+    }
+
+    $("noMatches").hidden = !(searching && totalMatches === 0);
+
+    // Search cleared: restore the saved/derived collapse state.
+    if (!searching) applyInitialCollapse();
   }
 
   // ---- Validation (e.g. quality min <= max) ------------------------------
@@ -129,155 +293,6 @@
     return out;
   }
 
-  // ---- Volume mixer (the "tab-volumes" ick) -------------------------------
-  // One row per YouTube tab that has a video: live slider + mute + click the
-  // title to jump to the tab. Tabs answer via their content script (which
-  // relays to the page-context player API).
-  const MIXER_POLL_MS = 1500;
-  let mixerTimer = null;
-  const mixerRows = new Map(); // tabId -> row entry
-
-  function ytTabs() {
-    return new Promise((resolve) => {
-      try {
-        api.tabs
-          .query({ url: ["https://www.youtube.com/*", "https://m.youtube.com/*"] })
-          .then(resolve, () => resolve([]));
-      } catch (e) {
-        resolve([]);
-      }
-    });
-  }
-
-  function askTab(tabId, msg) {
-    return new Promise((resolve) => {
-      try {
-        // Rejects when the tab has no content script (asleep, error page…) —
-        // those tabs simply don't appear in the mixer.
-        api.tabs.sendMessage(tabId, msg).then(resolve, () => resolve(null));
-      } catch (e) {
-        resolve(null);
-      }
-    });
-  }
-
-  function tabLabel(tab) {
-    return (tab.title || "YouTube").replace(/ - YouTube$/, "");
-  }
-
-  function buildMixerRow(tab) {
-    const row = document.createElement("div");
-    row.className = "mixer-row";
-
-    const title = document.createElement("button");
-    title.className = "mixer-tab";
-    title.type = "button";
-    title.title = "Go to this tab";
-    title.addEventListener("click", () => {
-      api.tabs.update(tab.id, { active: true });
-      if (api.windows && tab.windowId != null) {
-        api.windows.update(tab.windowId, { focused: true });
-      }
-    });
-
-    const controls = document.createElement("div");
-    controls.className = "mixer-controls";
-
-    const slider = document.createElement("input");
-    slider.type = "range";
-    slider.min = "0";
-    slider.max = "100";
-    slider.step = "1";
-
-    const pct = document.createElement("span");
-    pct.className = "mixer-pct";
-
-    const mute = document.createElement("button");
-    mute.className = "mixer-mute";
-    mute.type = "button";
-
-    const entry = { row, title, slider, pct, mute, muted: false, dragging: false };
-
-    slider.addEventListener("input", () => {
-      entry.dragging = true; // don't let the poll fight the drag
-      const v = parseInt(slider.value, 10);
-      pct.textContent = v + "%";
-      askTab(tab.id, { ytql: "volume-set", value: v });
-    });
-    slider.addEventListener("change", () => {
-      entry.dragging = false;
-    });
-
-    mute.addEventListener("click", () => {
-      askTab(tab.id, { ytql: "volume-mute", muted: !entry.muted }).then(refreshMixer);
-    });
-
-    controls.append(slider, pct, mute);
-    row.append(title, controls);
-    return entry;
-  }
-
-  function updateMixerRow(entry, tab, state) {
-    entry.title.textContent = "";
-    entry.title.append(tabLabel(tab));
-    if (!state.playing) {
-      const paused = document.createElement("span");
-      paused.className = "state";
-      paused.textContent = " — paused";
-      entry.title.appendChild(paused);
-    }
-    entry.muted = !!state.muted;
-    entry.mute.textContent = entry.muted ? "🔇" : "🔊";
-    entry.mute.title = entry.muted ? "Unmute this tab" : "Mute this tab";
-    if (!entry.dragging) {
-      entry.slider.value = String(state.volume);
-      entry.pct.textContent = entry.muted ? "muted" : state.volume + "%";
-    }
-  }
-
-  async function refreshMixer() {
-    if (document.hidden) return; // options page in a background tab
-    const tabs = await ytTabs();
-    const states = await Promise.all(
-      tabs.map((t) => askTab(t.id, { ytql: "volume-get" }))
-    );
-
-    const container = $("mixerRows");
-    const seen = new Set();
-    tabs.forEach((tab, i) => {
-      const state = states[i];
-      if (!state) return; // no video in that tab
-      seen.add(tab.id);
-      let entry = mixerRows.get(tab.id);
-      if (!entry) {
-        entry = buildMixerRow(tab);
-        mixerRows.set(tab.id, entry);
-        container.appendChild(entry.row);
-      }
-      updateMixerRow(entry, tab, state);
-    });
-
-    // Drop rows for tabs that closed or no longer have a video.
-    for (const [id, entry] of mixerRows) {
-      if (!seen.has(id)) {
-        entry.row.remove();
-        mixerRows.delete(id);
-      }
-    }
-    $("mixerEmpty").hidden = seen.size > 0;
-  }
-
-  function setMixerEnabled(on) {
-    on = on && !!(api.tabs && api.tabs.query); // needs the tabs API to exist
-    $("mixer").hidden = !on;
-    clearInterval(mixerTimer);
-    mixerTimer = null;
-    if (on) {
-      refreshMixer();
-      mixerTimer = setInterval(refreshMixer, MIXER_POLL_MS);
-    }
-  }
-
   let savedTimer = null;
   function flashSaved() {
     $("savedNote").hidden = false;
@@ -286,16 +301,14 @@
   }
 
   function syncAll() {
-    document.querySelectorAll("#icks .card").forEach((c) => c._sync && c._sync());
+    for (const rec of cards) rec.el._sync && rec.el._sync();
   }
 
   function save() {
     const invalid = rangeError();
     $("rangeError").hidden = !invalid;
     if (invalid) return;
-    const settings = collect();
-    api.storage.sync.set(settings);
-    setMixerEnabled(!!settings.volumeMixer);
+    api.storage.sync.set(collect());
     flashSaved();
   }
 
@@ -314,9 +327,8 @@
   }
 
   async function init() {
-    // Build the cards.
-    const container = $("icks");
-    for (const ick of REG.ICKS) container.appendChild(buildIck(ick));
+    // Build the grouped catalog.
+    buildGroups();
 
     // Footer links.
     if (REG.LINKS) {
@@ -332,15 +344,19 @@
       else el.value = String(stored[key]);
     }
     syncAll();
-    setMixerEnabled(!!stored.volumeMixer);
+    recount();
+    applyInitialCollapse();
 
-    // Save on any change.
+    // Save + recount on any change.
     for (const key in inputs) {
       inputs[key].addEventListener("change", () => {
         syncAll();
+        recount();
         save();
       });
     }
+
+    $("search").addEventListener("input", (e) => applySearch(e.target.value));
   }
 
   init();

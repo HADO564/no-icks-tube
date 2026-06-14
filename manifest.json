@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "no-icks-tube",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Force a preferred video quality (or range), scroll suggested videos independently, and view comments as collapsible cards.",
   "permissions": ["storage"],
   "host_permissions": ["https://www.youtube.com/*", "https://m.youtube.com/*"],
@@ -25,7 +25,7 @@
   },
   "action": {
     "default_title": "YouTube Quality & Layout",
-    "default_popup": "options/options.html",
+    "default_popup": "options/popup.html",
     "default_icon": {
       "48": "icons/icon-48.png",
       "128": "icons/icon-128.png"

@@ -11,22 +11,24 @@
       <header class="head">
         <h1>no-icks-tube</h1>
         <p class="tagline">Tick off the YouTube icks you want gone.</p>
+        <div class="toolbar">
+          <input
+            id="search"
+            class="search"
+            type="search"
+            placeholder="🔍 Search icks…"
+            autocomplete="off"
+            aria-label="Search icks"
+          />
+          <span class="summary" id="summary"></span>
+        </div>
       </header>
 
-      <!-- Volume mixer (the "tab-volumes" ick): one live row per YouTube tab
-           that has a video. Rows are built by options.js; the whole section
-           hides when the ick's toggle is off. -->
-      <section class="card" id="mixer" hidden>
-        <div class="row">
-          <h2 class="mixer-title">🔊 Volume mixer</h2>
-          <span class="area">YouTube tabs</span>
-        </div>
-        <div id="mixerRows"></div>
-        <p class="hint" id="mixerEmpty">No YouTube tabs with a video right now.</p>
-      </section>
+      <!-- Icks, grouped into collapsible sections by area. Built by
+           options.js from the registry (src/icks.js). -->
+      <div id="groups"></div>
 
-      <!-- Ick cards are generated here from the registry (src/icks.js). -->
-      <div id="icks"></div>
+      <p class="empty" id="noMatches" hidden>No icks match your search.</p>
 
       <p class="error" id="rangeError" hidden>
         Minimum can't be higher than the maximum.
