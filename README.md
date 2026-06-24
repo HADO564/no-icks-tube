@@ -116,7 +116,12 @@ For hacking on the extension, or to use it on Chromium.
 
 1. Go to `chrome://extensions`.
 2. Enable **Developer mode**.
-3. **Load unpacked** → select this folder.
+3. **Load unpacked** → select this folder. (Chrome prints a harmless warning
+   about the Firefox-only `browser_specific_settings` key and ignores it.)
+
+To produce a clean Chrome Web Store package with that key stripped, run
+`./build.ps1 -Target chrome` — see [SUBMITTING.md](SUBMITTING.md) for the full
+store-submission flow (Chrome Web Store and the public Firefox listing).
 
 ## Notes & limitations
 
