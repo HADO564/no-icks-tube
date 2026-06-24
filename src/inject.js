@@ -35,6 +35,72 @@
   // video so the viewer can freely override it in the player afterwards.
   let appliedFor = null;
 
+  // ---- Codec control ------------------------------------------------------
+  // YouTube probes which video codecs the browser can play — via
+  // MediaSource.isTypeSupported and HTMLMediaElement.canPlayType — and serves
+  // the best codec it thinks you support. By answering "no" for the heavier
+  // codecs we make it fall back to a lighter one. The wrappers are installed
+  // synchronously here at document_start (before YouTube's player code runs)
+  // and we seed the choice from localStorage so even the very first probe on a
+  // fresh page load is already filtered; the content script then keeps it in
+  // sync via the settings message below.
+  //
+  // Each entry is the set of codec tokens to reject when that codec is enforced,
+  // so YouTube is left serving the chosen one.
+  const CODEC_BLOCK = {
+    // VP9: drop AV1. H.264 stays as a safety net for the rare video with no VP9,
+    // but YouTube serves VP9 whenever it exists — so playback never breaks.
+    vp9: /av01/i,
+    // H.264/AVC: drop AV1 and VP9, leaving only H.264 (present on every video).
+    h264: /av01|vp0?9/i,
+    // AV1: drop H.264 and VP9 so AV1 is the only option. A video with no AV1
+    // track may then fail to play — that trade-off is spelled out in its cons.
+    av1: /avc1|avc3|vp0?9/i,
+  };
+  let codecBlockRe = null;
+
+  function setCodec(pref) {
+    codecBlockRe = (pref && CODEC_BLOCK[pref]) || null;
+  }
+
+  function codecBlocked(type) {
+    return !!(codecBlockRe && typeof type === "string" && codecBlockRe.test(type));
+  }
+
+  // Seed from the last choice cached by the content script (page-origin
+  // localStorage is shared between the two worlds).
+  try {
+    setCodec(localStorage.getItem("ytql-codec"));
+  } catch (e) {
+    /* storage blocked — the codec filter stays off until settings arrive */
+  }
+
+  // Wrap the probing APIs once. They consult `codecBlockRe` live, so toggling
+  // the setting takes effect on the next probe without re-wrapping anything.
+  (function installCodecFilter() {
+    try {
+      if (window.MediaSource && typeof MediaSource.isTypeSupported === "function") {
+        const orig = MediaSource.isTypeSupported.bind(MediaSource);
+        MediaSource.isTypeSupported = function (type) {
+          return codecBlocked(type) ? false : orig(type);
+        };
+      }
+    } catch (e) {
+      /* leave the native method in place */
+    }
+    try {
+      const proto = window.HTMLMediaElement && HTMLMediaElement.prototype;
+      if (proto && typeof proto.canPlayType === "function") {
+        const orig = proto.canPlayType;
+        proto.canPlayType = function (type) {
+          return codecBlocked(type) ? "" : orig.call(this, type);
+        };
+      }
+    } catch (e) {
+      /* leave the native method in place */
+    }
+  })();
+
   function getPlayer() {
     // The watch-page player; the API methods live on this DOM element.
     return (
@@ -211,6 +277,9 @@
     }
     if (data.__ytql !== "settings") return;
     settings = Object.assign(settings, data.payload);
+    if ("codecOverride" in data.payload) {
+      setCodec(data.payload.codecOverride ? data.payload.codecPreference : null);
+    }
     // Settings changed intentionally: re-apply once for the current video.
     appliedFor = null;
     applyQualityWithRetries(6);

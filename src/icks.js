@@ -35,6 +35,61 @@
     [420, "Wide (420px — fewer columns)"],
   ];
 
+  // The video codec to enforce on YouTube. Each option carries its own pros and
+  // cons so the options page can lay them out as pickable cards — the choice is
+  // a genuine trade-off, not an obvious default. `value` is what we persist and
+  // hand to inject.js, which blocks the other codecs so YouTube serves this one.
+  const CODECS = [
+    {
+      value: "h264",
+      name: "H.264 / AVC",
+      tag: "Lightest",
+      summary:
+        "The universally supported codec. Best if your device is older or you care about battery life and fan noise.",
+      pros: [
+        "Hardware-decoded on virtually every device — lowest CPU/GPU load",
+        "Best battery life; keeps laptops cool and fans quiet",
+        "Plays smoothly on old or low-powered machines",
+      ],
+      cons: [
+        "Capped at 1080p — no 1440p, 4K or 8K on YouTube",
+        "Largest files, so it uses the most data for the same quality",
+      ],
+    },
+    {
+      value: "vp9",
+      name: "VP9",
+      tag: "Balanced",
+      summary:
+        "YouTube's usual default. High resolutions with good compression — the safe all-rounder, and it never breaks playback.",
+      pros: [
+        "Supports 1440p, 4K and 8K",
+        "~30% less data than H.264 for the same quality",
+        "Hardware-decoded on most GPUs from ~2015 onward",
+      ],
+      cons: [
+        "Heavier on the CPU than H.264 where there's no hardware decoding",
+        "A touch less efficient than AV1",
+      ],
+    },
+    {
+      value: "av1",
+      name: "AV1",
+      tag: "Most efficient",
+      summary:
+        "The newest, most efficient codec — the best picture per megabyte, if your hardware can decode it.",
+      pros: [
+        "Best compression: the least data for a given quality",
+        "Sharpest quality on slow connections and at low bitrates",
+        "Royalty-free and future-proof (4K/8K and beyond)",
+      ],
+      cons: [
+        "Very CPU-heavy without a recent GPU (Intel 11th-gen+, RTX 30-series+, RX 6000+, Apple M3+) — can spike the CPU and spin up fans",
+        "Not every video has an AV1 version; those may fail to play — switch to VP9 if you hit that",
+      ],
+    },
+  ];
+
   // Each ick: the annoyance (`ick`), what we do about it (`fix`), where it
   // happens (`area`), and the settings that control it. The first setting is
   // the primary on/off toggle; the rest are options shown underneath it.
@@ -81,6 +136,17 @@
       added: "1.5.0",
       settings: [
         { key: "volumeMixer", type: "toggle", default: true, primary: true },
+      ],
+    },
+    {
+      id: "heavy-codec",
+      ick: "YouTube forces a video codec my device chokes on (AV1 spikes the CPU and the fans)",
+      fix: "Lets you choose which video codec YouTube serves you and enforces it, instead of leaving it to YouTube. Pick the one that suits your hardware below — each lists its trade-offs. Takes effect on the next video you open; reload the current one to switch it right now.",
+      area: "Player",
+      added: "1.7.0",
+      settings: [
+        { key: "codecOverride", type: "toggle", default: false, primary: true },
+        { key: "codecPreference", type: "choice", label: "Codec to enforce", default: "vp9", valueType: "string", options: CODECS },
       ],
     },
     {
@@ -149,6 +215,7 @@
     DEFAULTS,
     QUALITY,
     CARD_WIDTHS,
+    CODECS,
     LINKS,
     version,
     isNew,

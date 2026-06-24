@@ -81,6 +81,91 @@ select:disabled {
 .error { color: #ff6b6b; font-size: 13px; margin: 6px 0 0; }
 .saved { color: #4caf50; font-weight: 600; text-align: center; }
 
+/* ---- Choice control: pickable cards (e.g. codec, with pros/cons) ------- */
+.choice { margin-top: 14px; }
+.choice-label {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0 0 8px;
+}
+.choice-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.choice.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* One option = a clickable card with a radio. */
+.codec {
+  display: flex;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  cursor: pointer;
+}
+.codec:hover { border-color: var(--accent); }
+.codec input[type="radio"] {
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  accent-color: var(--yt-red);
+  cursor: pointer;
+}
+/* Highlight the chosen codec. */
+.codec:has(input:checked) {
+  border-color: var(--yt-red);
+  background: color-mix(in srgb, var(--yt-red) 8%, var(--bg));
+}
+
+.codec-body { flex: 1; min-width: 0; }
+.codec-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.codec-name { font-weight: 700; font-size: 15px; }
+.codec-tag {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+.codec-summary {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 5px 0 8px;
+}
+
+.codec-points {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 12.5px;
+}
+.codec-points li {
+  position: relative;
+  padding-left: 18px;
+  margin: 3px 0;
+  line-height: 1.4;
+}
+.codec-points li::before {
+  position: absolute;
+  left: 0;
+  font-weight: 700;
+}
+.codec-pros li::before { content: "✓"; color: #4caf50; }
+.codec-cons li::before { content: "✕"; color: #ff6b6b; }
+.codec-cons { margin-top: 4px; }
+
 /* Header */
 .head { margin-bottom: 18px; }
 .tagline { color: var(--muted); margin: 2px 0 0; font-size: 14px; }

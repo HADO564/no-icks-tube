@@ -49,6 +49,105 @@
     return inp;
   }
 
+  // ---- Build a "choice" control: one pickable card per option ------------
+  // Used by the codec ick: each option shows its name, a one-line summary and
+  // its pros/cons, so the trade-off is visible before you pick. Returns the DOM
+  // plus an adapter that mimics a form control (value/disabled/change) so the
+  // rest of the page treats it like any other input.
+  function buildPoints(kind, items) {
+    const ul = document.createElement("ul");
+    ul.className = "codec-points codec-" + kind;
+    for (const text of items) {
+      const li = document.createElement("li");
+      li.textContent = text;
+      ul.appendChild(li);
+    }
+    return ul;
+  }
+
+  function buildChoice(setting) {
+    const wrap = document.createElement("div");
+    wrap.className = "choice";
+
+    if (setting.label) {
+      const lab = document.createElement("p");
+      lab.className = "choice-label";
+      lab.textContent = setting.label;
+      wrap.appendChild(lab);
+    }
+
+    const grid = document.createElement("div");
+    grid.className = "choice-grid";
+    wrap.appendChild(grid);
+
+    const radios = [];
+    for (const opt of setting.options) {
+      const card = document.createElement("label");
+      card.className = "codec";
+
+      const radio = document.createElement("input");
+      radio.type = "radio";
+      radio.name = "ctl-" + setting.key;
+      radio.value = String(opt.value);
+      radios.push(radio);
+
+      const body = document.createElement("div");
+      body.className = "codec-body";
+
+      const head = document.createElement("div");
+      head.className = "codec-head";
+      const name = document.createElement("span");
+      name.className = "codec-name";
+      name.textContent = opt.name;
+      head.appendChild(name);
+      if (opt.tag) {
+        const tag = document.createElement("span");
+        tag.className = "codec-tag";
+        tag.textContent = opt.tag;
+        head.appendChild(tag);
+      }
+      body.appendChild(head);
+
+      if (opt.summary) {
+        const sum = document.createElement("p");
+        sum.className = "codec-summary";
+        sum.textContent = opt.summary;
+        body.appendChild(sum);
+      }
+      if (opt.pros && opt.pros.length) body.appendChild(buildPoints("pros", opt.pros));
+      if (opt.cons && opt.cons.length) body.appendChild(buildPoints("cons", opt.cons));
+
+      card.append(radio, body);
+      grid.appendChild(card);
+    }
+
+    const adapter = {
+      type: "choice",
+      get value() {
+        const on = radios.find((r) => r.checked);
+        return on ? on.value : setting.default;
+      },
+      set value(v) {
+        const want = String(v);
+        let matched = false;
+        for (const r of radios) {
+          r.checked = r.value === want;
+          matched = matched || r.checked;
+        }
+        if (!matched && radios.length) radios[0].checked = true;
+      },
+      set disabled(d) {
+        for (const r of radios) r.disabled = !!d;
+        wrap.classList.toggle("disabled", !!d);
+      },
+      addEventListener(type, fn) {
+        for (const r of radios) r.addEventListener(type, fn);
+      },
+    };
+
+    return { el: wrap, adapter };
+  }
+
   // ---- Build one ick card -------------------------------------------------
   function buildIck(ick) {
     const card = document.createElement("section");
@@ -57,6 +156,10 @@
 
     const primary = ick.settings.find((s) => s.primary) || ick.settings[0];
     const subs = ick.settings.filter((s) => s !== primary);
+    // Choice controls (codec cards) get their own full-width block; the rest
+    // share the side-by-side field row.
+    const choiceSubs = subs.filter((s) => s.type === "choice");
+    const fieldSubs = subs.filter((s) => s.type !== "choice");
 
     // Primary toggle, labelled with the ick itself.
     const toggle = buildControl(primary);
@@ -92,11 +195,11 @@
     hint.textContent = ick.fix;
     card.appendChild(hint);
 
-    // Sub-settings (only when the ick has any).
-    if (subs.length) {
+    // Plain sub-settings (selects / numbers) share a side-by-side field row.
+    if (fieldSubs.length) {
       const split = document.createElement("div");
       split.className = "row split";
-      for (const s of subs) {
+      for (const s of fieldSubs) {
         const field = document.createElement("div");
         field.className = "field";
         const lab = document.createElement("label");
@@ -111,6 +214,17 @@
       card.appendChild(split);
     }
 
+    // Choice sub-settings (codec cards) span the full card width below.
+    let choiceText = "";
+    for (const s of choiceSubs) {
+      const { el, adapter } = buildChoice(s);
+      inputs[s.key] = adapter;
+      card.appendChild(el);
+      for (const opt of s.options) {
+        choiceText += " " + opt.name + " " + opt.value + " " + (opt.summary || "");
+      }
+    }
+
     // Disable sub-controls when the primary toggle is off.
     card._sync = () => {
       const on = toggle.checked;
@@ -122,7 +236,7 @@
       el: card,
       primaryKey: primary.key,
       // Everything we let the search box match against, lower-cased once.
-      text: `${ick.ick} ${ick.fix} ${ick.area || ""}`.toLowerCase(),
+      text: `${ick.ick} ${ick.fix} ${ick.area || ""} ${choiceText}`.toLowerCase(),
     });
     return card;
   }
@@ -287,6 +401,10 @@
           if (s.min != null) n = Math.max(s.min, n);
           if (s.max != null) n = Math.min(s.max, n);
           out[s.key] = n;
+        } else if (s.valueType === "string") {
+          // String-valued select (e.g. codec name) — keep it as text; the
+          // default numeric parse would turn it into NaN.
+          out[s.key] = el.value;
         } else out[s.key] = parseInt(el.value, 10);
       }
     }

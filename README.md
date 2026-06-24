@@ -6,25 +6,32 @@ icks out of YouTube:
 1. **Sets a default video quality.** Picks the highest quality inside a range
    you choose — e.g. "best available, but at least 1080p" — once per video. You
    can still override it manually in the player; the extension won't fight you.
-2. **Disables autoplay.** Switches YouTube's Autoplay toggle off on each video
+2. **Controls which codec YouTube serves.** Lets you enforce a video codec
+   instead of leaving it to YouTube. Pick from cards that lay out each codec's
+   pros and cons: **H.264 / AVC** (lightest on CPU and battery, but capped at
+   1080p), **VP9** (the balanced default — 4K+ with good compression and no
+   breakage), or **AV1** (most efficient, but CPU-heavy without recent hardware
+   and missing from some videos). Off by default; takes effect on the next video
+   you open (reload to switch the current one).
+3. **Disables autoplay.** Switches YouTube's Autoplay toggle off on each video
    so it never auto-advances to the next one. Flip it back on in the player any
    time.
-3. **Resumes videos where you actually left off.** Remembers your exact
+4. **Resumes videos where you actually left off.** Remembers your exact
    position in every video and seeks back to it when the video loads again —
    after a refresh, a crash, or coming back days later. Links with an explicit
    `?t=` timestamp still win, and videos you finished start fresh.
-4. **Volume mixer for all your YouTube tabs.** The popup lists every open
+5. **Volume mixer for all your YouTube tabs.** The popup lists every open
    YouTube tab that has a video, each with a live volume slider and mute
    button — turn one tab down without hunting for it, or click its title to
    jump there. Volume changes go through YouTube's own player API, so the
    player's volume control stays in sync.
-5. **Independent suggested-videos scrolling.** Turns the related-videos column
+6. **Independent suggested-videos scrolling.** Turns the related-videos column
    into its own scroll container so scrolling there doesn't move the video, and
    scrolling over the video scrolls down into the comments.
-6. **Comments scroll pane + "Back to video".** Gives the comments their own
+7. **Comments scroll pane + "Back to video".** Gives the comments their own
    sticky scrollbar, and shows a fixed *Back to video* button once the player
    scrolls out of view that jumps you back to the top.
-7. **Comments as cards.** Lays comments out as vertical cards in a responsive
+8. **Comments as cards.** Lays comments out as vertical cards in a responsive
    grid. Clicking a comment's *Read more* (or opening its replies) expands that
    card to a full-width row; *Show less* shrinks it back. Done purely with CSS
    `:has()`, so it tracks YouTube's own expand state.
@@ -78,7 +85,9 @@ and the options UI + defaults update automatically.
 - `src/inject.js` — runs in the **page** context so it can call YouTube's
   internal player API (`getAvailableQualityLevels`, `setPlaybackQualityRange`,
   `getVolume`/`setVolume`). Picks the best quality within your range, re-applies
-  on navigation, and answers the popup's volume-mixer commands.
+  on navigation, and answers the popup's volume-mixer commands. It also wraps
+  `MediaSource.isTypeSupported` / `canPlayType` to hide heavier codecs from
+  YouTube when codec control is on.
 - `src/icks.js` — the **ick registry**: every ick, its settings, defaults, the
   area it belongs to, and the version it was `added` in. Loaded by the content
   scripts, the popup, and the catalog alike.
@@ -119,6 +128,9 @@ For hacking on the extension, or to use it on Chromium.
 - "Force quality" sets a *range* on the player (`setPlaybackQualityRange`), which
   YouTube treats as a strong hint; it generally sticks but can be overridden if
   a level genuinely isn't available for that video.
+- Forcing **H.264 / AVC** caps quality at 1080p, because YouTube only offers
+  resolutions above 1080p in VP9 and AV1. If you want 4K with codec control on,
+  choose VP9.
 
 ## License
 

@@ -21,6 +21,8 @@
     qualityEnabled: true,
     maxQuality: 4320,
     minQuality: 1080,
+    codecOverride: false,
+    codecPreference: "vp9",
     disableAutoplay: true,
     resumeEnabled: true,
     volumeMixer: true,
@@ -49,10 +51,28 @@
           qualityEnabled: settings.qualityEnabled,
           maxPx: settings.maxQuality,
           minPx: settings.minQuality,
+          codecOverride: settings.codecOverride,
+          codecPreference: settings.codecPreference,
         },
       },
       "*"
     );
+  }
+
+  // Stash the codec choice in the page's localStorage so inject.js can read it
+  // synchronously at document_start and filter even the very first codec probe
+  // (the postMessage above only arrives after YouTube may have already probed).
+  const CODEC_KEY = "ytql-codec";
+  function cacheCodec(settings) {
+    try {
+      if (settings.codecOverride) {
+        localStorage.setItem(CODEC_KEY, settings.codecPreference);
+      } else {
+        localStorage.removeItem(CODEC_KEY);
+      }
+    } catch (e) {
+      /* storage blocked — codec just won't survive a reload */
+    }
   }
 
   // ---- Independent sidebar scroll CSS ------------------------------------
@@ -685,6 +705,7 @@
     setComments(settings.commentsCards, settings.cardMinWidth, settings.cardMinHeight);
     commentsOn = settings.commentsCards;
     if (commentsOn) ensureCollapseButtons();
+    cacheCodec(settings);
     postSettings(settings);
   }
 
